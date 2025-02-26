@@ -60,6 +60,8 @@ img2macros/
 
 1. Open the application in your browser
 2. Click "Choose File" to upload a food image
+   - For best results, use images under 5MB
+   - The application will automatically resize large images
 3. Click "Analyze Food" to send the image for processing
 4. View the estimated nutritional information for your meal
 
@@ -132,6 +134,14 @@ Returns the API status.
 - Never commit your `.env` file or expose your API keys
 - The application uses CORS to allow requests from any origin in development; restrict this in production
 - Base64 image encoding/decoding increases payload size; consider optimizations for production
+
+## Technical Notes
+
+### Image Processing
+
+- Images are automatically resized to a maximum dimension of 800x800 pixels to improve upload speed and reduce server load
+- The backend has a 50MB limit for JSON payloads, but it's recommended to use smaller images when possible
+- Images are converted to JPEG format with 80% quality to optimize size
 
 ## License
 

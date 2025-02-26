@@ -4,9 +4,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('submitBtn');
     const loadingDiv = document.getElementById('loading');
     const resultsDiv = document.getElementById('results');
+    const imagePreview = document.getElementById('imagePreview');
 
     // API endpoint (adjust if your API is hosted elsewhere)
     const API_URL = 'http://localhost:3000/process-image';
+
+    // Add preview functionality
+    imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.classList.add('hidden');
+        }
+    });
 
     // Function to handle image submission
     submitBtn.addEventListener('click', async () => {
@@ -28,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingDiv.classList.remove('hidden');
             resultsDiv.classList.add('hidden');
             
-            // Convert image to base64
-            const base64Image = await convertToBase64(file);
+            // Process image (resize if needed) and convert to base64
+            const base64Image = await processAndConvertImage(file);
             
             // Send image to API
             const response = await fetch(API_URL, {
@@ -61,13 +77,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Function to convert image to base64
-    function convertToBase64(file) {
+    // Function to process and resize image if needed
+    function processAndConvertImage(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Target max dimensions (adjust as needed)
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Resize if image is too large
+                    if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+                        if (width > height) {
+                            height = Math.round(height * (MAX_WIDTH / width));
+                            width = MAX_WIDTH;
+                        } else {
+                            width = Math.round(width * (MAX_HEIGHT / height));
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to JPEG format with reduced quality to minimize size
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    resolve(dataUrl);
+                };
+                img.onerror = reject;
+                img.src = event.target.result;
+            };
+            reader.onerror = reject;
             reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
         });
     }
 
