@@ -3,18 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>img2Macros - Image to Macros and Calories</title>
+    <title>Img2Macros - Food Nutritional Analysis</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
 </head>
 <body>
-    <div>
-
-        <h1>Welcome to img2Macros</h1>
-        <p>Transform your images into macros and calorie information effortlessly!</p>
-        <input type="file" id="imageInput" accept="image/*">
-        <button id="submitBtn">Submit Image</button>
+    <div class="container">
+        <header>
+            <h1>Img2Macros</h1>
+            <p>Upload a food image to analyze nutritional content</p>
+        </header>
+        
+        <main>
+            <div class="upload-section">
+                <input type="file" id="imageInput" accept="image/*">
+                <button id="submitBtn">Analyze Food</button>
+            </div>
+            
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Analyzing your food...</p>
+            </div>
+            
+            <div id="results" class="results hidden">
+                <!-- Results will be populated here -->
+            </div>
+        </main>
+        
+        <footer>
+            <p>Powered by Google Generative AI</p>
+        </footer>
     </div>
     
+    <script src="script.js"></script>
 </body>
 </html>

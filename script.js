@@ -2,6 +2,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const imageInput = document.getElementById('imageInput');
     const submitBtn = document.getElementById('submitBtn');
+    const loadingDiv = document.getElementById('loading');
+    const resultsDiv = document.getElementById('results');
+
+    // API endpoint (adjust if your API is hosted elsewhere)
+    const API_URL = 'http://localhost:3000/process-image';
 
     // Function to handle image submission
     submitBtn.addEventListener('click', async () => {
@@ -19,36 +24,77 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            // Here you would typically send the image to a server/API
-            // For now, we'll just display a placeholder response
-            displayResults();
+            // Show loading indicator
+            loadingDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            
+            // Convert image to base64
+            const base64Image = await convertToBase64(file);
+            
+            // Send image to API
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: base64Image.split(',')[1], // Remove data URL prefix
+                    prompt: "Analyze this food image and provide nutritional information. Return the results in this format:\nFood: [food name]\nCalories: [amount] kcal\nProtein: [amount]g\nCarbs: [amount]g\nFat: [amount]g\n\nProvide your best estimate based on the visible ingredients and portion size."
+                }),
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API responded with status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Display the results
+            displayResults(data.generated);
+            
         } catch (error) {
             console.error('Error processing image:', error);
             alert('Error processing image. Please try again.');
+        } finally {
+            // Hide loading indicator
+            loadingDiv.classList.add('hidden');
         }
     });
 
-    // Function to display macros and calories (placeholder)
-    function displayResults() {
-        // Create a results div if it doesn't exist
-        let resultsDiv = document.querySelector('.results');
-        if (!resultsDiv) {
-            resultsDiv = document.createElement('div');
-            resultsDiv.className = 'results';
-            document.body.appendChild(resultsDiv);
-        }
+    // Function to convert image to base64
+    function convertToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
 
-        // Display placeholder data
-        resultsDiv.innerHTML = `
-            <h2>Analysis Results</h2>
-            <div class="macro-info">
-                <p><strong>Food:</strong> Mixed Salad with Chicken</p>
-                <p><strong>Calories:</strong> 350 kcal</p>
-                <p><strong>Protein:</strong> 25g</p>
-                <p><strong>Carbs:</strong> 30g</p>
-                <p><strong>Fat:</strong> 15g</p>
-                <p><em>Note: This is placeholder data. In a real application, this would be generated from image analysis.</em></p>
-            </div>
-        `;
+    // Function to display macros and calories
+    function displayResults(text) {
+        // Show results div
+        resultsDiv.classList.remove('hidden');
+        
+        // Parse the API response - this is simplified and assumes a specific format
+        // In a real app, you might want to parse this more robustly
+        let formattedHtml = '<h2>Analysis Results</h2><div class="macro-info">';
+        
+        // Split by new lines and convert to HTML
+        const lines = text.split('\n');
+        lines.forEach(line => {
+            if (line.trim()) {
+                const [key, value] = line.split(':');
+                if (key && value) {
+                    formattedHtml += `<p><strong>${key.trim()}:</strong> ${value.trim()}</p>`;
+                } else {
+                    formattedHtml += `<p>${line}</p>`;
+                }
+            }
+        });
+        
+        formattedHtml += '</div>';
+        
+        resultsDiv.innerHTML = formattedHtml;
     }
 });
